@@ -1,0 +1,20 @@
+<?php
+//General
+$general_timezone = 'Africa/Johannesburg';
+
+//Freeradius database options
+$freeradius_db_host = 'localhost';
+$freeradius_db_username = 'radius';
+$freeradius_db_password = 'password123';
+$freeradius_db_database = 'radius';
+
+//WHMCS API options
+$whmcs_api_url = "http://whmcs/includes/api.php";
+$whmcs_api_username ="admin";
+$whmcs_api_password = "admin";
+$whmcs_api_key = "1234567890";
+
+//Paths
+$radclient_path = '/usr/local/bin/radclient';
+
+?>
