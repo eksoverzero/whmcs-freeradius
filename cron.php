@@ -31,15 +31,17 @@
 //
 
 //Make sure the WHMCS API details are present & tested
-  if( ( isset($whmcs_api_url) ) || ( isset($whmcs_api_username) ) || ( isset($whmcs_api_password) ) || ( isset($whmcs_api_key) ) ) {
+  if( ( $whmcs_api_url == "" ) || ( $whmcs_api_username == "" ) || ( $whmcs_api_password == "" ) ) {
     die( "WHMCS API details missing\n" );
   }
 //end
 
 //Connect to the radius database
-  $mysql = mysql_connect($freeradius_db_host,$freeradius_db_username,$freeradius_db_password);
+  $mysql = mysql_connect($freeradius_db_host, $freeradius_db_username, $freeradius_db_password);
   $conn = mysql_select_db($freeradius_db_database);
-  die( "Could not connect to WHMCS database: " . mysql_error() . "\n" );
+  if (!$conn) {
+    die( "Could not connect to WHMCS database: " . mysql_error() . "\n" );
+  }
 //end
 
 //Get a list of users in the radcheck table 
