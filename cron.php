@@ -106,7 +106,7 @@
     if($usagetotal >= $usagelimit) {
       $result = mysql_query( "SELECT value FROM radcheck where username = '$user' and attribute = 'Expiration'" );
       $row = mysql_fetch_array($result);
-      if( $row ) {
+      if( !$row ) {
         $result = mysql_query( "INSERT into radcheck (username, attribute, op, value) values ('".$user."','Expiration',':=','".date("Y-d-m G:i:s")."')" );
         echo $user . ": Account has reached its usage limit.\n";
         disconnect($user);
@@ -136,19 +136,18 @@
       $nas = mysql_fetch_array($result);
       if( $nas ) {
         $command = "echo \"User-Name='".$username."',Framed-IP-Address='".$radacct['framedipaddress']."',Acct-Session-Id='".$radacct['acctsessionid']."',NAS-IP-Address='".$radacct['nasipaddress']."'\"| ".$radclient_path." -r 3 -x ".$nas['nasname'].":".$nas['ports']." disconnect ".$nas['secret']."";
-          exec($command,$output,$rv);
-          $podreply = end($output);
-          if( strpos( $podreply, "Disconnect-ACK" ) === true ) {
-            $message = $username.": Successfully disconnected session";
-          }
-          else if( strpos($podreply, "Disconnect-NAK" ) === true ) {
-            $message = "Failed to disconnected session. Device rejected the request.";
-          }
-          else {
-            $message = $username.": Failed to disconnected session. Device time out.";
-          }
-           echo $message . "\n";
+        exec($command,$output,$rv);
+        $podreply = end($output);
+        if( strpos( $podreply, "Disconnect-ACK" ) === true ) {
+          $message = $username.": Successfully disconnected session";
         }
+        else if( strpos($podreply, "Disconnect-NAK" ) === true ) {
+          $message = "Failed to disconnected session. Device rejected the request.";
+        }
+        else {
+          $message = $username.": Failed to disconnected session. Device time out.";
+        }
+        echo $message . "\n";
       }
     }
   }
