@@ -14,13 +14,13 @@ The date_range and freeradius_username functions are from the freeRADIUS module 
 
 ### Installing
 
-freeradius.php & clientarea.tpl file -> WHMCSROOT/modules/servers/freeradius/
-freeradiusapi.php -> WHMCSROOT/include/api/
+Copy: freeradius.php & clientarea.tpl file -> WHMCSROOT/modules/servers/freeradius/
+
+Copy: freeradiusapi.php -> WHMCSROOT/include/api/
+
 
 The reset of the files are for the radius servers.
 
 cron.php is to be added as a cron job.
 
 config.php.example is to be renamed to config.php and edited as per your setup
-
-clientarea.tpl is fully customizable according to your needs
