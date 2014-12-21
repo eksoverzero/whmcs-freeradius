@@ -14,13 +14,19 @@ The date_range and freeradius_username functions are from the freeRADIUS module 
 
 ### Installing
 
-Copy: freeradius.php & clientarea.tpl file -> WHMCSROOT/modules/servers/freeradius/
+##### WHMCS
 
-Copy: freeradiusapi.php -> WHMCSROOT/include/api/
+- Create a folder called `freeradius` in `WHMCSROOT/modules/servers/`
+- Copy `freeradius.php` and `clientarea.tpl` into the newly created `WHMCSROOT/modules/servers/freeradius` folder
+- Copy `freeradiusapi.php` into the `WHMCSROOT/include/api/` folder
 
+##### FreeRADIUS servers
 
-The reset of the files are for the radius servers.
-
-cron.php is to be added as a cron job.
-
-config.php.example is to be renamed to config.php and edited as per your setup
+- Create a folder anywhere with whatever name you like. For example, on Linux `mkdir /opt/whmcs-freeradius`
+- Copy `cron.php` and `config.php.example` into this folder
+- Rename `config.php.example` to `config.php`
+- Edit `config.php` as per your needs/requirements
+- Create a Cron task for the `cron.php` file. If your `cron.php` file is in `/opt/whmcs-freeradius` then your cron task shold look something like this, if you want it to run every 5 minutes:
+  ```
+  */5 * * * * PATH_TO_PHP/php -q /opt/whmcs-freeradius/cron.php
+  ```
