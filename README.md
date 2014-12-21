@@ -31,3 +31,5 @@ The date_range and freeradius_username functions are from the freeRADIUS module 
   ```
   */5 * * * * PATH_TO_PHP/php -q /opt/whmcs-freeradius/cron.php
   ```
+
+- On Linux, you can find the `PATH_TO_PHP` by running `which php`
