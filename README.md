@@ -27,6 +27,7 @@ The date_range and freeradius_username functions are from the freeRADIUS module 
 - Rename `config.php.example` to `config.php`
 - Edit `config.php` as per your needs/requirements
 - Create a Cron task for the `cron.php` file. If your `cron.php` file is in `/opt/whmcs-freeradius` then your cron task shold look something like this, if you want it to run every 5 minutes:
+  
   ```
   */5 * * * * PATH_TO_PHP/php -q /opt/whmcs-freeradius/cron.php
   ```
