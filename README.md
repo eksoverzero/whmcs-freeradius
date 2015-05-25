@@ -1,5 +1,7 @@
 # WHMCS Freeradius
 
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/eksoverzero/whmcs-freeradius?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+
 ### Important note...
 
 There have been recent untested changes and additions. Log an issue as needed or sponsor a WHMCS testing license / server, if you like.
