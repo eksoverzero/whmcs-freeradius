@@ -400,7 +400,7 @@ function freeradius_ChangePackage($params){
   }
 
   if( $session_limit ) {
-    $query = "UPDATE radcheck SET value='$session_limit' WHERE username='$username' AND attribute='Mikrotik-Rate-Limit'";
+    $query = "UPDATE radcheck SET value='$session_limit' WHERE username='$username' AND attribute='Simultaneous-Use'";
     $result = mysql_query($query,$freeradiussql);
     if (!$result) {
       $radiussqlerror = mysql_error();
