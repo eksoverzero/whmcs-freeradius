@@ -1,7 +1,8 @@
 # WHMCS Freeradius
 
-[![Slack Status](http://slackin.secondimpression.net/badge.svg)](http://slackin.secondimpression.net)
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/eksoverzero/whmcs-freeradius?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 [![Stories in Ready](https://badge.waffle.io/secondimpression/whmcs-freeradius.png?label=ready&title=Ready)](https://waffle.io/secondimpression/whmcs-freeradius)
+[![Gratipay](https://img.shields.io/gratipay/~eksoverzero.svg)](https://www.gratipay.com/~eksoverzero/)
 
 ### Important note...
 
