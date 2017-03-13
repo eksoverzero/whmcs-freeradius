@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/secondimpression/whmcs-freeradius.png?label=ready&title=Ready)](https://waffle.io/secondimpression/whmcs-freeradius)
 # WHMCS Freeradius
 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/secondimpression/whmcs-freeradius?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
