@@ -6,7 +6,7 @@
     return 0;
   }
 
-  if (!@flock( $tmpfile, LOCK_EX | LOCK_NB, &$wouldblock) || $wouldblock){
+  if (!@flock( $tmpfile, LOCK_EX | LOCK_NB, $wouldblock) || $wouldblock){
     @fclose($tmpfile);
     return 0;
   }
