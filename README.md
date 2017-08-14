@@ -1,35 +1,41 @@
-# WHMCS Freeradius
+# WHMCS FreeRADIUS
 
-[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/secondimpression/whmcs-freeradius?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
-[![Stories in Ready](https://badge.waffle.io/secondimpression/whmcs-freeradius.png?label=ready&title=Ready)](https://waffle.io/secondimpression/whmcs-freeradius)
-[![Gratipay](https://img.shields.io/gratipay/~eksoverzero.svg)](https://www.gratipay.com/~eksoverzero/)
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/eksoverzero/whmcs-freeradius?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
-### Important note...
-
-There have been recent untested changes and additions. Log an issue as needed or sponsor a WHMCS testing license / server, if you like.
-
-### I think this would be the legal/disclaimer stuff...
-
-I have worked on this project for a very long time. In that time I have modified many versions of this module, made by others(for clients). In that process, some logic just worked better, so I adopted it. for example:
-
-The date_range and freeradius_username functions are from the freeRADIUS module made by WHMCS, I think. I was previously using MySQL for the date ranges and returning errors on duplicate usernames. These just work better.
-
-##### Please pull and fix or contribute
+A FreeRADIUS provisioning/server module for WHMCS
 
 ### Installing
 
+##### The files
+
+```
+whmcs-freeradius/
+  |- whmcs/                  <--- All the files for the WHMCS server
+    |- freeradius/           <--- All the files required to create FreeRADIUS accounts
+      |- lib/
+      |- templates/
+      |- tests/
+      |  hooks.php
+      |  logo.png
+      |  freeradius.php
+    |- api                   <--- All the files required for FreeRADIUS to speak to WHMCS
+      | freeradiusapi.php
+  |- freeradius/             <--- All the files for the FreeRADIUS server
+    | cron.php
+    | config.php.example
+  | README.md
+```
+
 ##### WHMCS
 
-- Create a folder called `freeradius` in `WHMCSROOT/modules/servers/`
-- Copy `freeradius.php` and `clientarea.tpl` into the newly created `WHMCSROOT/modules/servers/freeradius` folder
-- Copy `freeradiusapi.php` into the `WHMCSROOT/include/api/` folder
+- Copy the `whmcs/freeradius` folder to the `WHMCSROOT/modules/servers/` folder
+- Copy the `whmcs/api/freeradiusapi.php` file into the `WHMCSROOT/include/api/` folder
 
 ##### FreeRADIUS servers
 
-- Create a folder anywhere with whatever name you like. For example, on Linux `mkdir /opt/whmcs-freeradius`
-- Copy `cron.php` and `config.php.example` into this folder
+- Copy the `freeradius` folder to anywhere on the FreeRADIUS server. For example, on Linux `cp whmcs-freeradius/freeradius /opt/whmcs-freeradius`
 - Rename `config.php.example` to `config.php`
-- Edit `config.php` as per your needs/requirements
+- Edit `config.php` with **your** database and WHMCS server details
 - Create a Cron task for the `cron.php` file. If your `cron.php` file is in `/opt/whmcs-freeradius` then your cron task shold look something like this, if you want it to run every 5 minutes:
   
   ```
