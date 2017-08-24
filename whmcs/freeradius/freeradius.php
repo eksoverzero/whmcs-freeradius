@@ -46,10 +46,9 @@ if (!defined("WHMCS")) {
  *
  * @return array
  */
-function provisioningmodule_MetaData()
-{
+function provisioningmodule_MetaData(){
     return array(
-        'DisplayName' => 'Demo Provisioning Module',
+        'DisplayName' => 'WHMCS FreeRADIUS',
         'APIVersion' => '1.1', // Use API Version 1.1
         'RequiresServer' => true, // Set true if module requires a server to work
         'DefaultNonSSLPort' => '1111', // Default Non-SSL Connection Port
@@ -81,51 +80,32 @@ function provisioningmodule_MetaData()
  *
  * @return array
  */
-function provisioningmodule_ConfigOptions()
-{
+function freeradius_ConfigOptions(){
     return array(
-        // a text field type allows for single line text input
-        'Text Field' => array(
+        'Radius Group' => array(
             'Type' => 'text',
             'Size' => '25',
-            'Default' => '1024',
-            'Description' => 'Enter in megabytes',
-        ),
-        // a password field type allows for masked text input
-        'Password Field' => array(
-            'Type' => 'password',
-            'Size' => '25',
             'Default' => '',
-            'Description' => 'Enter secret value here',
+            'Description' => 'FreeRADIUS group name',
         ),
-        // the yesno field type displays a single checkbox option
-        'Checkbox Field' => array(
-            'Type' => 'yesno',
-            'Description' => 'Tick to enable',
+        'Usage Limit' => array(
+            'Type' => 'text',
+            'Size' => '25',
+            'Default' => '0',
+            'Description' => 'Usage limit in bytes. Use 0 or leave blank to disable',
         ),
-        // the dropdown field type renders a select menu of options
-        'Dropdown Field' => array(
-            'Type' => 'dropdown',
-            'Options' => array(
-                'option1' => 'Display Value 1',
-                'option2' => 'Second Option',
-                'option3' => 'Another Option',
-            ),
-            'Description' => 'Choose one',
+        'Rate Limit' => array(
+            'Type' => 'text',
+            'Size' => '25',
+            'Default' => '0',
+            'Description' => 'Rate limit. Use 0 or leave blank to disable',
         ),
-        // the radio field type displays a series of radio button options
-        'Radio Field' => array(
-            'Type' => 'radio',
-            'Options' => 'First Option,Second Option,Third Option',
-            'Description' => 'Choose your option!',
-        ),
-        // the textarea field type allows for multi-line text input
-        'Textarea Field' => array(
-            'Type' => 'textarea',
-            'Rows' => '3',
-            'Cols' => '60',
-            'Description' => 'Freeform multi-line text input field',
-        ),
+        'Session Limit' => array(
+            'Type' => 'text',
+            'Size' => '5',
+            'Default' => '0',
+            'Description' => 'Session limit as a number. Use 0 or leave blank to disable',
+        )
     );
 }
 /**
@@ -144,29 +124,112 @@ function provisioningmodule_ConfigOptions()
  *
  * @return string "success" or an error message
  */
-function provisioningmodule_CreateAccount(array $params)
-{
+function freeradius_CreateAccount(array $params){
     try {
-        // Call the service's provisioning function, using the values provided
-        // by WHMCS in `$params`.
-        //
-        // A sample `$params` array may be defined as:
-        //
-        // ```
-        // array(
-        //     'domain' => 'The domain of the service to provision',
-        //     'username' => 'The username to access the new service',
-        //     'password' => 'The password to access the new service',
-        //     'configoption1' => 'The amount of disk space to provision',
-        //     'configoption2' => 'The new services secret key',
-        //     'configoption3' => 'Whether or not to enable FTP',
-        //     ...
-        // )
-        // ```
+        $email = $params['clientsdetails']['email'];
+        $firstname = $params['clientsdetails']['firstname'];
+        $lastname = $params['clientsdetails']['lastname'];
+
+        $username = $params['username'];
+        $password = $params['password'];
+
+        $groupname = $params['configoption1'];
+        $rate_limit = $params['configoption3'];
+        $session_limit = $params['configoption4'];
+
+        $sqlhost = $params['serverip'];
+        $sqldbname = $params['serveraccesshash'];
+        $sqlusername = $params['serverusername'];
+        $sqlpassword = $params['serverpassword'];
+
+        if (!$username) {
+            $username = freeradius_username($email);
+
+            update_query(
+                'tblhosting',
+                array(
+                    'username' => $username
+                ),
+                array(
+                    'id' => $params['serviceid']
+                )
+            );
+        }
+
+        $freeradiussql = mysql_connect($sqlhost, $sqlusername, $sqlpassword);
+        mysql_select_db($sqldbname);
+
+        $query = "SELECT COUNT(*) FROM radcheck WHERE username='$username'";
+        $result = mysql_query($query,$freeradiussql);
+
+        if (!$result) {
+            $radiussqlerror = mysql_error();
+            freeradius_WHMCSReconnect();
+            return 'FreeRADIUS Database Query Error: ' . $radiussqlerror;
+        }
+
+        $data = mysql_fetch_array($result);
+
+        if ($data[0]) {
+            freeradius_WHMCSReconnect();
+            return 'Username Already Exists';
+        }
+
+        $query = "INSERT INTO radcheck (username, attribute, value, op) VALUES ('$username', 'User-Password', '$password', ':=')";
+        $result = mysql_query($query,$freeradiussql);
+
+        if (!$result) {
+            $radiussqlerror = mysql_error();
+            freeradius_WHMCSReconnect();
+            return 'FreeRADIUS Database Query Error: ' . $radiussqlerror;
+        }
+
+        $query = "INSERT INTO radusergroup(username, groupname) VALUES ('$username', '$groupname')";
+        $result = mysql_query( $query, $freeradiussql );
+
+        if (!$result) {
+            $radiussqlerror = mysql_error();
+            freeradius_WHMCSReconnect();
+            return 'FreeRADIUS Database Query Error: ' . $radiussqlerror;
+        }
+
+        foreach ($params["configoptions"] as $key => $value ) {
+            if ($key == 'Rate Limit') {
+                $rate_limit = $value;
+            }
+
+            if ($key == 'Session Limit') {
+                $session_limit = $value;
+            }
+        }
+
+        if ($rate_limit) {
+            $query = "INSERT INTO radreply (username,attribute,value,op) VALUES ('$username','Mikrotik-Rate-Limit','$rate_limit',':=')";
+            $result = mysql_query($query,$freeradiussql);
+
+            if (!$result) {
+                $radiussqlerror = mysql_error();
+                freeradius_WHMCSReconnect();
+                return 'FreeRADIUS Database Query Error: ' . $radiussqlerror;
+            }
+        }
+
+        if ($session_limit) {
+            $query = "INSERT INTO radcheck (username,attribute,value,op) VALUES ('$username','Simultaneous-Use','$session_limit',':=')";
+            $result = mysql_query($query,$freeradiussql);
+
+            if (!$result) {
+                $radiussqlerror = mysql_error();
+                freeradius_WHMCSReconnect();
+                return 'FreeRadius Database Query Error: ' . $radiussqlerror;
+            }
+        }
+
+        freeradius_WHMCSReconnect();
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
-            'provisioningmodule',
+            'freeradius',
             __FUNCTION__,
             $params,
             $e->getMessage(),
@@ -174,6 +237,7 @@ function provisioningmodule_CreateAccount(array $params)
         );
         return $e->getMessage();
     }
+
     return 'success';
 }
 /**
@@ -189,15 +253,64 @@ function provisioningmodule_CreateAccount(array $params)
  *
  * @return string "success" or an error message
  */
-function provisioningmodule_SuspendAccount(array $params)
-{
+function freeradius_SuspendAccount(array $params){
     try {
-        // Call the service's suspend function, using the values provided by
-        // WHMCS in `$params`.
+        $sqlhost = $params['serverip'];
+        $sqldbname = $params['serveraccesshash'];
+        $sqlusername = $params['serverusername'];
+        $sqlpassword = $params['serverpassword'];
+
+        $freeradiussql = mysql_connect($sqlhost, $sqlusername, $sqlpassword);
+        mysql_select_db($sqldbname);
+
+        $query = "SELECT COUNT(*) FROM radcheck WHERE username='$username'";
+        $result = mysql_query($query, $freeradiussql);
+
+        if (!$result) {
+            $radiussqlerror = mysql_error();
+            freeradius_WHMCSReconnect();
+            return 'FreeRADIUS Database Query Error: ' . $radiussqlerror;
+        }
+
+        $data = mysql_fetch_array($result);
+        $count = $data[0];
+
+        if (!$count) {
+            freeradius_WHMCSReconnect();
+            return 'User Not Found';
+        }
+
+        $query = "SELECT COUNT(*) FROM radcheck WHERE username='$username' AND attribute='Expiration'";
+        $result = mysql_query($query,$freeradiussql);
+
+        if (!$result) {
+            $radiussqlerror = mysql_error();
+            freeradius_WHMCSReconnect();
+            return 'FreeRADIUS Database Query Error: ' . $radiussqlerror;
+        }
+
+        $data = mysql_fetch_array($result);
+        $count = $data[0];
+
+        if (!$count) {
+            $query = "INSERT INTO radcheck (username,attribute,value,op) VALUES ('$username','Expiration','".date("d F Y")."',':=')";
+        } else {
+            $query = "UPDATE radcheck SET value='".date("d F Y")."' WHERE username='$username' AND attribute='Expiration'";
+        }
+
+        $result = mysql_query($query, $freeradiussql);
+
+        if (!$result) {
+            $radiussqlerror = mysql_error();
+            freeradius_WHMCSReconnect();
+            return 'FreeRADIUS Database Query Error: ' . $radiussqlerror;
+        }
+
+        freeradius_WHMCSReconnect();
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
-            'provisioningmodule',
+            'freeradius',
             __FUNCTION__,
             $params,
             $e->getMessage(),
@@ -205,6 +318,7 @@ function provisioningmodule_SuspendAccount(array $params)
         );
         return $e->getMessage();
     }
+
     return 'success';
 }
 /**
@@ -220,15 +334,47 @@ function provisioningmodule_SuspendAccount(array $params)
  *
  * @return string "success" or an error message
  */
-function provisioningmodule_UnsuspendAccount(array $params)
-{
+function freeradius_UnsuspendAccount(array $params){
     try {
-        // Call the service's unsuspend function, using the values provided by
-        // WHMCS in `$params`.
+        $sqlhost = $params['serverip'];
+        $sqldbname = $params['serveraccesshash'];
+        $sqlusername = $params['serverusername'];
+        $sqlpassword = $params['serverpassword'];
+
+        $freeradiussql = mysql_connect($sqlhost, $sqlusername, $sqlpassword);
+        mysql_select_db($sqldbname);
+
+        $query = "SELECT COUNT(*) FROM radcheck WHERE username='$username' AND attribute='Expiration'";
+        $result = mysql_query($query,$freeradiussql);
+
+        if (!$result) {
+            $radiussqlerror = mysql_error();
+            freeradius_WHMCSReconnect();
+            return 'FreeRADIUS Database Query Error: ' . $radiussqlerror;
+        }
+
+        $data = mysql_fetch_array($result);
+        $count = $data[0];
+
+        if (!$count) {
+            freeradius_WHMCSReconnect();
+            return 'User Not Currently Suspended';
+        }
+
+        $query = "DELETE FROM radcheck WHERE username='$username' AND attribute='Expiration'";
+        $result = mysql_query($query,$freeradiussql);
+
+        if (!$result) {
+            $radiussqlerror = mysql_error();
+            freeradius_WHMCSReconnect();
+            return 'FreeRADIUS Database Query Error: ' . $radiussqlerror;
+        }
+
+        freeradius_WHMCSReconnect();
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
-            'provisioningmodule',
+            'freeradius',
             __FUNCTION__,
             $params,
             $e->getMessage(),
@@ -236,6 +382,7 @@ function provisioningmodule_UnsuspendAccount(array $params)
         );
         return $e->getMessage();
     }
+
     return 'success';
 }
 /**
@@ -250,15 +397,48 @@ function provisioningmodule_UnsuspendAccount(array $params)
  *
  * @return string "success" or an error message
  */
-function provisioningmodule_TerminateAccount(array $params)
-{
+function freeradius_TerminateAccount(array $params){
     try {
-        // Call the service's terminate function, using the values provided by
-        // WHMCS in `$params`.
+        $sqlhost = $params['serverip'];
+        $sqldbname = $params['serveraccesshash'];
+        $sqlusername = $params['serverusername'];
+        $sqlpassword = $params['serverpassword'];
+
+        $freeradiussql = mysql_connect($sqlhost, $sqlusername, $sqlpassword);
+        mysql_select_db($sqldbname);
+
+        $query = "DELETE FROM radreply WHERE username='$username'";
+        $result = mysql_query($query,$freeradiussql);
+
+        if (!$result) {
+            $radiussqlerror = mysql_error();
+            freeradius_WHMCSReconnect();
+            return 'FreeRadius Database Query Error: ' . $radiussqlerror;
+        }
+
+        $query = "DELETE FROM radusergroup WHERE username='$username'";
+        $result = mysql_query($query,$freeradiussql);
+
+        if (!$result) {
+            $radiussqlerror = mysql_error();
+            freeradius_WHMCSReconnect();
+            return 'FreeRADIUS Database Query Error: ' . $radiussqlerror;
+        }
+
+        $query = "DELETE FROM radcheck WHERE username='$username'";
+        $result = mysql_query($query,$freeradiussql);
+
+        if (!$result) {
+            $radiussqlerror = mysql_error();
+            freeradius_WHMCSReconnect();
+            return 'FreeRADIUS Database Query Error: ' . $radiussqlerror;
+        }
+
+        freeradius_WHMCSReconnect();
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
-            'provisioningmodule',
+            'freeradius',
             __FUNCTION__,
             $params,
             $e->getMessage(),
@@ -284,24 +464,47 @@ function provisioningmodule_TerminateAccount(array $params)
  *
  * @return string "success" or an error message
  */
-function provisioningmodule_ChangePassword(array $params)
-{
+function freeradius_ChangePassword(array $params){
     try {
-        // Call the service's change password function, using the values
-        // provided by WHMCS in `$params`.
-        //
-        // A sample `$params` array may be defined as:
-        //
-        // ```
-        // array(
-        //     'username' => 'The service username',
-        //     'password' => 'The new service password',
-        // )
-        // ```
+        $sqlhost = $params['serverip'];
+        $sqldbname = $params['serveraccesshash'];
+        $sqlusername = $params['serverusername'];
+        $sqlpassword = $params['serverpassword'];
+
+        $freeradiussql = mysql_connect($sqlhost, $sqlusername, $sqlpassword);
+        mysql_select_db($sqldbname);
+
+        $query = "SELECT COUNT(*) FROM radcheck WHERE username='$username'";
+        $result = mysql_query($query,$freeradiussql);
+
+        if (!$result) {
+            $radiussqlerror = mysql_error();
+            freeradius_WHMCSReconnect();
+            return 'FreeRADIUS Database Query Error: ' . $radiussqlerror;
+        }
+
+        $data = mysql_fetch_array($result);
+        $count = $data[0];
+
+        if (!$count) {
+            freeradius_WHMCSReconnect();
+            return 'User Not Found';
+        }
+
+        $query = "UPDATE radcheck SET value='$password' WHERE username='$username' AND attribute='User-Password'";
+        $result = mysql_query($query,$freeradiussql);
+
+        if (!$result) {
+            $radiussqlerror = mysql_error();
+            freeradius_WHMCSReconnect();
+            return 'FreeRADIUS Database Query Error: ' . $radiussqlerror;
+        }
+
+        freeradius_WHMCSReconnect();
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
-            'provisioningmodule',
+            'freeradius',
             __FUNCTION__,
             $params,
             $e->getMessage(),
@@ -327,25 +530,83 @@ function provisioningmodule_ChangePassword(array $params)
  *
  * @return string "success" or an error message
  */
-function provisioningmodule_ChangePackage(array $params)
+function freeradius_ChangePackage(array $params)
 {
     try {
-        // Call the service's change password function, using the values
-        // provided by WHMCS in `$params`.
-        //
-        // A sample `$params` array may be defined as:
-        //
-        // ```
-        // array(
-        //     'username' => 'The service username',
-        //     'configoption1' => 'The new service disk space',
-        //     'configoption3' => 'Whether or not to enable FTP',
-        // )
-        // ```
+        $rate_limit = $params['configoption3'];
+        $session_limit = $params['configoption4'];
+
+        $sqlhost = $params['serverip'];
+        $sqldbname = $params['serveraccesshash'];
+        $sqlusername = $params['serverusername'];
+        $sqlpassword = $params['serverpassword'];
+
+        $freeradiussql = mysql_connect($sqlhost, $sqlusername, $sqlpassword);
+        mysql_select_db($sqldbname);
+
+        $query = "SELECT COUNT(*) FROM radusergroup WHERE username='$username'";
+        $result = mysql_query($query,$freeradiussql);
+
+        if (!$result) {
+            $radiussqlerror = mysql_error();
+            freeradius_WHMCSReconnect();
+            return 'FreeRADIUS Database Query Error: ' . $radiussqlerror;
+        }
+
+        $data = mysql_fetch_array($result);
+        $count = $data[0];
+
+        if (!$count) {
+            freeradius_WHMCSReconnect();
+            return 'User Not Found';
+        }
+
+        $query = "UPDATE radusergroup SET groupname='$groupname' WHERE username='$username'";
+        $result = mysql_query($query,$freeradiussql);
+
+        if (!$result) {
+            $radiussqlerror = mysql_error();
+            freeradius_WHMCSReconnect();
+            return 'FreeRADIUS Database Query Error: ' . $radiussqlerror;
+        }
+
+        foreach ($params["configoptions"] as $key => $value) {
+            if ($key == 'Rate Limit') {
+                $rate_limit = $value;
+            }
+
+            if ($key == 'Session Limit') {
+                $session_limit = $value;
+            }
+        }
+
+        if ($rate_limit) {
+            $query = "UPDATE radreply SET value='$rate_limit' WHERE username='$username' AND attribute='Mikrotik-Rate-Limit'";
+            $result = mysql_query($query,$freeradiussql);
+
+            if (!$result) {
+                $radiussqlerror = mysql_error();
+                freeradius_WHMCSReconnect();
+                return 'FreeRADIUS Database Query Error: ' . $radiussqlerror;
+            }
+        }
+
+        if ($session_limit) {
+            $query = "UPDATE radcheck SET value='$session_limit' WHERE username='$username' AND attribute='Simultaneous-Use'";
+            $result = mysql_query($query,$freeradiussql);
+
+            if (!$result) {
+                $radiussqlerror = mysql_error();
+                freeradius_WHMCSReconnect();
+                return 'FreeRADIUS Database Query Error: ' . $radiussqlerror;
+            }
+        }
+
+        freeradius_WHMCSReconnect();
     } catch (Exception $e) {
         // Record the error in WHMCS's module log.
         logModuleCall(
-            'provisioningmodule',
+            'freeradius',
             __FUNCTION__,
             $params,
             $e->getMessage(),
@@ -353,6 +614,7 @@ function provisioningmodule_ChangePackage(array $params)
         );
         return $e->getMessage();
     }
+
     return 'success';
 }
 /**
@@ -734,4 +996,210 @@ function provisioningmodule_ClientArea(array $params)
             ),
         );
     }
+}
+
+function freeradius_WHMCSReconnect() {
+    require( ROOTDIR . "/configuration.php" );
+
+    $whmcsmysql = mysql_connect($db_host, $db_username, $db_password);
+    mysql_select_db($db_name);
+}
+
+function date_range($nextduedate, $billingcycle) {
+    $day = substr($nextduedate, 8, 2);
+    $year = substr($nextduedate, 0, 4);
+    $month = substr($nextduedate, 5, 2);
+
+
+    if ($billingcycle == 'Monthly') {
+        $new_time = mktime( 0, 0, 0, $month - 1, $day, $year );
+    } else if ($billingcycle == 'Quarterly') {
+        $new_time = mktime( 0, 0, 0, $month - 3, $day, $year );
+    } else if ($billingcycle == 'Semi-Annually') {
+        $new_time = mktime(0, 0, 0, $month - 6, $day, $year);
+    } else if ($billingcycle == 'Annually') {
+        $new_time = mktime(0, 0, 0, $month, $day, $year - 1);
+    } else if ($billingcycle == 'Biennially') {
+        $new_time = mktime(0, 0, 0, $month, $day, $year - 2);
+    }
+
+    $startdate = date('Y-m-d', $new_time );
+    $enddate = '';
+
+    if (date('Ymd', $new_time) >= date('Ymd')) {
+        if ($billingcycle == 'Monthly') {
+            $new_time = mktime(0, 0, 0, $month - 2, $day, $year);
+        } else if ($billingcycle == 'Quarterly') {
+            $new_time = mktime(0, 0, 0, $month - 6, $day, $year);
+        } else if ($billingcycle == 'Semi-Annually') {
+            $new_time = mktime(0, 0, 0, $month - 12, $day, $year);
+        } else if ($billingcycle == 'Annually'){
+            $new_time = mktime(0, 0, 0, $month, $day, $year - 2);
+        } else if ($billingcycle == 'Biennially') {
+            $new_time = mktime(0, 0, 0, $month, $day, $year - 4);
+        }
+
+        $startdate = date( "Y-m-d", $new_time );
+
+        if ($billingcycle == 'Monthly') {
+            $new_time = mktime(0, 0, 0, $month - 1, $day, $year);
+        } else if ($billingcycle == 'Quarterly') {
+            $new_time = mktime(0, 0, 0, $month - 3, $day, $year);
+        } else if ($billingcycle == 'Semi-Annually') {
+            $new_time = mktime(0, 0, 0, $month - 6, $day, $year);
+        } else if ($billingcycle == 'Annually') {
+            $new_time = mktime(0, 0, 0, $month, $day, $year - 1);
+        } else if ($billingcycle == 'Biennially') {
+            $new_time = mktime(0, 0, 0, $month, $day, $year - 2);
+        }
+
+        $enddate = date('Y-m-d', $new_time );
+    }
+
+    return array(
+        'enddate' => $enddate,
+        'startdate' => $startdate
+    );
+}
+
+function collect_usage($params){
+    $username = $params['username'];
+    $serviceid = $params['serviceid'];
+
+    $groupname = $params['configoption1'];
+    $usage_limit = $params['configoption2'];
+
+    $sqlhost = $params['serverip'];
+    $sqldbname = $params['serveraccesshash'];
+    $sqlusername = $params['serverusername'];
+    $sqlpassword = $params['serverpassword'];
+
+    $status = "Offline";
+    $usage_limit = 0;
+
+    $result = select_query(
+      'tblhosting',
+      'nextduedate, billingcycle',
+      array('id' => $serviceid)
+    );
+
+    $data = mysql_fetch_array($result);
+    $date_range = date_range($data['nextduedate'], $data['billingcycle']);
+
+    $enddate = $date_range['enddate'];
+    $startdate = $date_range['startdate'];
+
+    $freeradiussql = mysql_connect($sqlhost, $sqlusername, $sqlpassword);
+    mysql_select_db($sqldbname);
+
+    $query = "SELECT COUNT(*) AS logins,SUM(radacct.AcctSessionTime) AS logintime,SUM(radacct.AcctInputOctets) AS uploads,SUM(radacct.AcctOutputOctets) AS downloads,SUM(radacct.AcctOutputOctets) + SUM(radacct.AcctInputOctets) AS total FROM radacct WHERE radacct.Username='$username' AND radacct.AcctStartTime>='".$startdate."'";
+
+    if ($enddate) {
+        $query .= " AND radacct.AcctStartTime<='".$startdate."'";
+    }
+
+    $query .= " ORDER BY AcctStartTime DESC";
+
+    $result = mysql_query($query, $freeradiussql);
+    $data = mysql_fetch_array($result);
+
+    $total = $data[4];
+    $logins = $data[0];
+    $uploads = $data[2];
+    $downloads = $data[3];
+    $logintime = $data[1];
+
+    $query = "SELECT radacct.AcctStartTime as start, radacct.AcctStopTime as stop FROM radacct WHERE radacct.Username='$username' ORDER BY AcctStartTime DESC LIMIT 0,1";
+    $result = mysql_query($query,$freeradiussql);
+    $data = mysql_fetch_array($result);
+
+    $sessions = mysql_num_rows($result);
+
+    $end = $data[1];
+    $start = $data[0];
+
+    if ($end) {
+        $status = 'Logged in at ' . $start;
+    }
+
+    if ($sessions < 1) {
+        $status = 'No logins';
+    }
+
+    freeradius_WHMCSReconnect();
+
+    if (empty($usage_limit) && !is_numeric($usage_limit)) {
+        $usage_limit = 0;
+    }
+
+    foreach ($params['configoptions'] as $key => $value) {
+        $Megabytes = 0;
+        $Gigabytes = 0;
+
+        if ($key == 'Megabytes') {
+            if (is_numeric($value)) {
+                $Gigabytes = $value * 1024 * 1024;
+            }
+        }
+
+        if ($key == 'Gigabytes') {
+            if (is_numeric($value)) {
+                $Gigabytes = $value * 1024 * 1024 * 1024;
+            }
+        }
+
+        if (($Megabytes > 0) || ($Gigabytes > 0)) {
+            $usage_limit = $Megabytes + $Gigabytes;
+        }
+    }
+
+    return array(
+        'logins' => $logins,
+        'logintime' => $logintime,
+        'total' => $total,
+        'uploads' => $uploads,
+        'downloads' => $downloads,
+        'usage_limit' => $usage_limit,
+        'status' => $status,
+    );
+}
+
+function secs_to_h($secs) {
+    $s = "";
+    $units = array(
+        "day" => 24*3600,
+        "hour" => 3600,
+        "week" => 7*24*3600,
+        "minute" => 60
+    );
+
+    if ( $secs == 0 ) return "0 seconds";
+    if ( $secs < 60 ) return "{$secs} seconds";
+
+    foreach ($units as $name => $divisor) {
+        if ($quot = intval($secs / $divisor)) {
+            $s .= $quot." ".$name;
+            $s .= (abs($quot) > 1 ? "s" : "") . ", ";
+            $secs -= $quot * $divisor;
+        }
+    }
+
+    return substr($s, 0, -2);
+}
+
+function byte_size($bytes) {
+    $size = $bytes / 1024;
+
+    if ($size < 1024) {
+        $size = number_format($size, 2);
+        $size .= ' KB';
+    } else if ($size / 1024 < 1024) {
+        $size = number_format($size / 1024, 2);
+        $size .= ' MB';
+    } else if ($size / 1024 / 1024 < 1024) {
+        $size = number_format($size / 1024 / 1024, 2);
+        $size .= ' GB';
+    }
+
+    return $size;
 }
