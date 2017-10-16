@@ -10,9 +10,11 @@ $freeradius_db_database = 'radius';
 
 //WHMCS API options
 $whmcs_api_url = 'http://whmcs/includes/api.php';
-$whmcs_api_username = 'admin';
-$whmcs_api_password = 'admin';
-$whmcs_api_key = '1234567890';
+//$whmcs_api_username = 'admin';
+//$whmcs_api_password = 'admin';
+//$whmcs_api_key = '1234567890';
+$whmcs_api_identifier = 'api_identifier_hash';
+$whmcs_api_secret = 'api_identifier_secret';
 
 //Paths
 $radclient_path = '/usr/local/bin/radclient';
