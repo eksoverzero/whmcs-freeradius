@@ -1,20 +1,12 @@
 # WHMCS Freeradius
 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/secondimpression/whmcs-freeradius?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
-[![Stories in Ready](https://badge.waffle.io/secondimpression/whmcs-freeradius.png?label=ready&title=Ready)](https://waffle.io/secondimpression/whmcs-freeradius)
-[![Gratipay](https://img.shields.io/gratipay/~eksoverzero.svg)](https://www.gratipay.com/~eksoverzero/)
 
-### Important note...
+### LOOKING FOR A MAINTAINER
 
-There have been recent untested changes and additions. Log an issue as needed or sponsor a WHMCS testing license / server, if you like.
+FreeRADIUS experience not required, just PHP, MySQL and WHMCS. I'll be available for questions, I just don't have time to be as active on this project as I'd like to be.
 
-### I think this would be the legal/disclaimer stuff...
-
-I have worked on this project for a very long time. In that time I have modified many versions of this module, made by others(for clients). In that process, some logic just worked better, so I adopted it. for example:
-
-The date_range and freeradius_username functions are from the freeRADIUS module made by WHMCS, I think. I was previously using MySQL for the date ranges and returning errors on duplicate usernames. These just work better.
-
-##### Please pull and fix or contribute
+*Willing to pay for assistance on a per bug/feature basis*
 
 ### Installing
 
