@@ -535,7 +535,7 @@ function collect_usage($params){
   mysql_select_db($sqldbname);
 
   $query = "SELECT COUNT(*) AS logins,SUM(radacct.AcctSessionTime) AS logintime,SUM(radacct.AcctInputOctets) AS uploads,SUM(radacct.AcctOutputOctets) AS downloads,SUM(radacct.AcctOutputOctets) + SUM(radacct.AcctInputOctets) AS total FROM radacct WHERE radacct.Username='$username' AND radacct.AcctStartTime>='".$startdate."'";
-  if ($enddate) $query .= " AND radacct.AcctStartTime<='".$startdate."'";
+  if ($enddate) $query .= " AND radacct.acctstoptime<='".$enddate."'";
   $query .= " ORDER BY AcctStartTime DESC";
   $result = mysql_query($query,$freeradiussql);
   $data = mysql_fetch_array($result);
@@ -572,7 +572,7 @@ function collect_usage($params){
     $Gigabytes = 0;
     if( $key == 'Megabytes' ){
       if( is_numeric($value) ){
-        $Gigabytes = $value * 1024 * 1024;
+        $Megabytes = $value * 1024 * 1024;
       }
     }
     if($key == 'Gigabytes'){
