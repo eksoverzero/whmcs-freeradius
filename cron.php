@@ -31,7 +31,7 @@
 //
 
 //Make sure the WHMCS API details are present & tested
-  if( ( $whmcs_api_url == "" ) || ( $whmcs_api_username == "" ) || ( $whmcs_api_password == "" ) ) {
+  if( ( $whmcs_api_url == "" ) || ( $whmcs_api_identifier == "" ) || ( $whmcs_api_identifier == "" ) ) {
     die( "WHMCS API details missing\n" );
   }
 //end
@@ -54,9 +54,11 @@
 //Start the overusage checking
   foreach($radius_users as $user) {
     $postfields = array();
-    $postfields["username"] = $whmcs_api_username;
-    $postfields["password"] = md5($whmcs_api_password);
-    $postfields["api_key"] = $whmcs_api_key;
+//    $postfields["username"] = $whmcs_api_username;
+//    $postfields["password"] = md5($whmcs_api_password);
+//    $postfields["api_key"] = $whmcs_api_key;
+    $postfields["identifier"] = $whmcs_api_identifier;
+    $postfields["secret"] = $whmcs_api_secret;
     $postfields["action"] = "freeradiusapi";
     $postfields["service_username"] = $user;
     $postfields["responsetype"] = "json";
