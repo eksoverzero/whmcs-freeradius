@@ -1138,7 +1138,7 @@ function collect_usage($params){
 
         if ($key == 'Megabytes') {
             if (is_numeric($value)) {
-                $Gigabytes = $value * 1024 * 1024;
+                $Megabytes = $value * 1024 * 1024;
             }
         }
 
