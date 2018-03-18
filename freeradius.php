@@ -83,7 +83,7 @@ function freeradius_username($email){
       "username" => $email
     )
   );
-  $data = mysql_fetch_array($result);
+  $data = mysqli_fetch_array($result);
   $username_exists = $data[0];
   $suffix = 0;
   while( $username_exists > 0 ){
@@ -96,7 +96,7 @@ function freeradius_username($email){
         "username" => $email
       )
     );
-    $data = mysql_fetch_array($result);
+    $data = mysqli_fetch_array($result);
     $username_exists = $data[0];
   }
   return $email;
@@ -128,32 +128,32 @@ function freeradius_CreateAccount($params){
   $sqlusername = $params["serverusername"];
   $sqlpassword = $params["serverpassword"];
   $sqldbname = $params["serveraccesshash"];
-  $freeradiussql = mysql_connect($sqlhost,$sqlusername,$sqlpassword);
-  mysql_select_db($sqldbname);
+  $freeradiussql = ($GLOBALS["___mysqli_ston"] = mysqli_connect($sqlhost, $sqlusername, $sqlpassword));
+  mysqli_select_db($GLOBALS["___mysqli_ston"], $sqldbname);
 
   $query = "SELECT COUNT(*) FROM radcheck WHERE username='$username'";
-  $result = mysql_query($query,$freeradiussql);
+  $result = mysqli_query($freeradiussql, $query);
   if( !$result ){
-    $radiussqlerror = mysql_error();
+    $radiussqlerror = mysqli_error($GLOBALS["___mysqli_ston"]);
     freeradius_WHMCSReconnect();
     return "FreeRadius Database Query Error: ".$radiussqlerror;
   }
-  $data = mysql_fetch_array($result);
+  $data = mysqli_fetch_array($result);
   if( $data[0] ){
     freeradius_WHMCSReconnect();
     return "Username Already Exists";
   }
   $query = "INSERT INTO radcheck (username, attribute, value, op) VALUES ('$username', 'User-Password', '$password', ':=')";
-  $result = mysql_query($query,$freeradiussql);
+  $result = mysqli_query($freeradiussql, $query);
   if( !$result ){
-    $radiussqlerror = mysql_error();
+    $radiussqlerror = mysqli_error($GLOBALS["___mysqli_ston"]);
     freeradius_WHMCSReconnect();
     return "FreeRadius Database Query Error: " . $radiussqlerror;
   }
   $query = "INSERT INTO radusergroup(username, groupname) VALUES ('$username', '$groupname')";
-  $result = mysql_query( $query, $freeradiussql );
+  $result = mysqli_query( $freeradiussql ,  $query);
   if( !$result ){
-    $radiussqlerror = mysql_error();
+    $radiussqlerror = mysqli_error($GLOBALS["___mysqli_ston"]);
     freeradius_WHMCSReconnect();
     return "FreeRadius Database Query Error: " . $radiussqlerror;
   }
@@ -172,9 +172,9 @@ function freeradius_CreateAccount($params){
 
   if( $rate_limit ){
     $query = "INSERT INTO radreply (username,attribute,value,op) VALUES ('$username','Mikrotik-Rate-Limit','$rate_limit',':=')";
-    $result = mysql_query($query,$freeradiussql);
+    $result = mysqli_query($freeradiussql, $query);
     if (!$result) {
-      $radiussqlerror = mysql_error();
+      $radiussqlerror = mysqli_error($GLOBALS["___mysqli_ston"]);
       freeradius_WHMCSReconnect();
       return "FreeRadius Database Query Error: ".$radiussqlerror;
     }
@@ -182,9 +182,9 @@ function freeradius_CreateAccount($params){
 
   if( $session_limit ){
     $query = "INSERT INTO radcheck (username,attribute,value,op) VALUES ('$username','Simultaneous-Use','$session_limit',':=')";
-    $result = mysql_query($query,$freeradiussql);
+    $result = mysqli_query($freeradiussql, $query);
     if (!$result) {
-      $radiussqlerror = mysql_error();
+      $radiussqlerror = mysqli_error($GLOBALS["___mysqli_ston"]);
       freeradius_WHMCSReconnect();
       return "FreeRadius Database Query Error: ".$radiussqlerror;
     }
@@ -202,38 +202,38 @@ function freeradius_SuspendAccount($params){
   $sqlusername = $params["serverusername"];
   $sqlpassword = $params["serverpassword"];
   $sqldbname = $params["serveraccesshash"];
-  $freeradiussql = mysql_connect($sqlhost,$sqlusername,$sqlpassword);
-  mysql_select_db($sqldbname);
+  $freeradiussql = ($GLOBALS["___mysqli_ston"] = mysqli_connect($sqlhost, $sqlusername, $sqlpassword));
+  mysqli_select_db($GLOBALS["___mysqli_ston"], $sqldbname);
 
   $query = "SELECT COUNT(*) FROM radcheck WHERE username='$username'";
-  $result = mysql_query($query,$freeradiussql);
+  $result = mysqli_query($freeradiussql, $query);
   if (!$result) {
     freeradius_WHMCSReconnect();
-    return "FreeRadius Database Query Error: ".mysql_error();
+    return "FreeRadius Database Query Error: ".mysqli_error($GLOBALS["___mysqli_ston"]);
   }
-  $data = mysql_fetch_array($result);
+  $data = mysqli_fetch_array($result);
   $count = $data[0];
   if (!$count) {
     freeradius_WHMCSReconnect();
     return "User Not Found";
   }
   $query = "SELECT COUNT(*) FROM radcheck WHERE username='$username' AND attribute='Expiration'";
-  $result = mysql_query($query,$freeradiussql);
+  $result = mysqli_query($freeradiussql, $query);
   if (!$result) {
     freeradius_WHMCSReconnect();
-    return "FreeRadius Database Query Error: ".mysql_error();
+    return "FreeRadius Database Query Error: ".mysqli_error($GLOBALS["___mysqli_ston"]);
   }
-  $data = mysql_fetch_array($result);
+  $data = mysqli_fetch_array($result);
   $count = $data[0];
   if (!$count) {
     $query = "INSERT INTO radcheck (username,attribute,value,op) VALUES ('$username','Expiration','".date("d F Y")."',':=')";
   } else {
     $query = "UPDATE radcheck SET value='".date("d F Y")."' WHERE username='$username' AND attribute='Expiration'";
   }
-  $result = mysql_query($query,$freeradiussql);
+  $result = mysqli_query($freeradiussql, $query);
   if (!$result) {
     freeradius_WHMCSReconnect();
-    return "FreeRadius Database Query Error: ".mysql_error();
+    return "FreeRadius Database Query Error: ".mysqli_error($GLOBALS["___mysqli_ston"]);
   }
   freeradius_WHMCSReconnect();
 
@@ -248,26 +248,26 @@ function freeradius_UnsuspendAccount($params){
   $sqlusername = $params["serverusername"];
   $sqlpassword = $params["serverpassword"];
   $sqldbname = $params["serveraccesshash"];
-  $freeradiussql = mysql_connect($sqlhost,$sqlusername,$sqlpassword);
-  mysql_select_db($sqldbname);
+  $freeradiussql = ($GLOBALS["___mysqli_ston"] = mysqli_connect($sqlhost, $sqlusername, $sqlpassword));
+  mysqli_select_db($GLOBALS["___mysqli_ston"], $sqldbname);
 
   $query = "SELECT COUNT(*) FROM radcheck WHERE username='$username' AND attribute='Expiration'";
-  $result = mysql_query($query,$freeradiussql);
+  $result = mysqli_query($freeradiussql, $query);
   if (!$result) {
     freeradius_WHMCSReconnect();
-    return "FreeRadius Database Query Error: ".mysql_error();
+    return "FreeRadius Database Query Error: ".mysqli_error($GLOBALS["___mysqli_ston"]);
   }
-  $data = mysql_fetch_array($result);
+  $data = mysqli_fetch_array($result);
   $count = $data[0];
   if (!$count) {
     freeradius_WHMCSReconnect();
     return "User Not Currently Suspended";
   }
   $query = "DELETE FROM radcheck WHERE username='$username' AND attribute='Expiration'";
-  $result = mysql_query($query,$freeradiussql);
+  $result = mysqli_query($freeradiussql, $query);
   if (!$result) {
     freeradius_WHMCSReconnect();
-    return "FreeRadius Database Query Error: ".mysql_error();
+    return "FreeRadius Database Query Error: ".mysqli_error($GLOBALS["___mysqli_ston"]);
   }
   freeradius_WHMCSReconnect();
 
@@ -282,27 +282,27 @@ function freeradius_TerminateAccount($params){
   $sqlusername = $params["serverusername"];
   $sqlpassword = $params["serverpassword"];
   $sqldbname = $params["serveraccesshash"];
-  $freeradiussql = mysql_connect($sqlhost,$sqlusername,$sqlpassword);
-  mysql_select_db($sqldbname);
+  $freeradiussql = ($GLOBALS["___mysqli_ston"] = mysqli_connect($sqlhost, $sqlusername, $sqlpassword));
+  mysqli_select_db($GLOBALS["___mysqli_ston"], $sqldbname);
 
   $query = "DELETE FROM radreply WHERE username='$username'";
-  $result = mysql_query($query,$freeradiussql);
+  $result = mysqli_query($freeradiussql, $query);
   if (!$result) {
-    $radiussqlerror = mysql_error();
+    $radiussqlerror = mysqli_error($GLOBALS["___mysqli_ston"]);
     freeradius_WHMCSReconnect();
     return "FreeRadius Database Query Error: ".$radiussqlerror;
   }
   $query = "DELETE FROM radusergroup WHERE username='$username'";
-  $result = mysql_query($query,$freeradiussql);
+  $result = mysqli_query($freeradiussql, $query);
   if (!$result) {
-    $radiussqlerror = mysql_error();
+    $radiussqlerror = mysqli_error($GLOBALS["___mysqli_ston"]);
     freeradius_WHMCSReconnect();
     return "FreeRadius Database Query Error: ".$radiussqlerror;
   }
   $query = "DELETE FROM radcheck WHERE username='$username'";
-  $result = mysql_query($query,$freeradiussql);
+  $result = mysqli_query($freeradiussql, $query);
   if (!$result) {
-    $radiussqlerror = mysql_error();
+    $radiussqlerror = mysqli_error($GLOBALS["___mysqli_ston"]);
     freeradius_WHMCSReconnect();
     return "FreeRadius Database Query Error: ".$radiussqlerror;
   }
@@ -319,27 +319,27 @@ function freeradius_ChangePassword($params){
   $sqlusername = $params["serverusername"];
   $sqlpassword = $params["serverpassword"];
   $sqldbname = $params["serveraccesshash"];
-  $freeradiussql = mysql_connect($sqlhost,$sqlusername,$sqlpassword);
-  mysql_select_db($sqldbname);
+  $freeradiussql = ($GLOBALS["___mysqli_ston"] = mysqli_connect($sqlhost, $sqlusername, $sqlpassword));
+  mysqli_select_db($GLOBALS["___mysqli_ston"], $sqldbname);
 
   $query = "SELECT COUNT(*) FROM radcheck WHERE username='$username'";
-  $result = mysql_query($query,$freeradiussql);
+  $result = mysqli_query($freeradiussql, $query);
   if (!$result) {
-    $sqlerror = mysql_error();
+    $sqlerror = mysqli_error($GLOBALS["___mysqli_ston"]);
     freeradius_WHMCSReconnect();
     return "FreeRadius Database Query Error: $sqlerror";
   }
-  $data = mysql_fetch_array($result);
+  $data = mysqli_fetch_array($result);
   $count = $data[0];
   if (!$count) {
     freeradius_WHMCSReconnect();
     return "User Not Found";
   }
   $query = "UPDATE radcheck SET value='$password' WHERE username='$username' AND attribute='User-Password'";
-  $result = mysql_query($query,$freeradiussql);
+  $result = mysqli_query($freeradiussql, $query);
   if (!$result) {
     freeradius_WHMCSReconnect();
-    return "FreeRadius Database Query Error: ".mysql_error();
+    return "FreeRadius Database Query Error: ".mysqli_error($GLOBALS["___mysqli_ston"]);
   }
   freeradius_WHMCSReconnect();
 
@@ -355,26 +355,26 @@ function freeradius_ChangePackage($params){
   $sqlusername = $params["serverusername"];
   $sqlpassword = $params["serverpassword"];
   $sqldbname = $params["serveraccesshash"];
-  $freeradiussql = mysql_connect($sqlhost,$sqlusername,$sqlpassword);
-  mysql_select_db($sqldbname);
+  $freeradiussql = ($GLOBALS["___mysqli_ston"] = mysqli_connect($sqlhost, $sqlusername, $sqlpassword));
+  mysqli_select_db($GLOBALS["___mysqli_ston"], $sqldbname);
 
   $query = "SELECT COUNT(*) FROM radusergroup WHERE username='$username'";
-  $result = mysql_query($query,$freeradiussql);
+  $result = mysqli_query($freeradiussql, $query);
   if (!$result) {
     freeradius_WHMCSReconnect();
-    return "FreeRadius Database Query Error: ".mysql_error();
+    return "FreeRadius Database Query Error: ".mysqli_error($GLOBALS["___mysqli_ston"]);
   }
-  $data = mysql_fetch_array($result);
+  $data = mysqli_fetch_array($result);
   $count = $data[0];
   if ( !$count ) {
     freeradius_WHMCSReconnect();
     return "User Not Found";
   }
   $query = "UPDATE radusergroup SET groupname='$groupname' WHERE username='$username'";
-  $result = mysql_query($query,$freeradiussql);
+  $result = mysqli_query($freeradiussql, $query);
   if ( !$result ) {
     freeradius_WHMCSReconnect();
-    return "FreeRadius Database Query Error: ".mysql_error();
+    return "FreeRadius Database Query Error: ".mysqli_error($GLOBALS["___mysqli_ston"]);
   }
 
   $rate_limit = $params["configoption3"];
@@ -391,9 +391,9 @@ function freeradius_ChangePackage($params){
 
   if( $rate_limit ) {
     $query = "UPDATE radreply SET value='$rate_limit' WHERE username='$username' AND attribute='Mikrotik-Rate-Limit'";
-    $result = mysql_query($query,$freeradiussql);
+    $result = mysqli_query($freeradiussql, $query);
     if (!$result) {
-      $radiussqlerror = mysql_error();
+      $radiussqlerror = mysqli_error($GLOBALS["___mysqli_ston"]);
       freeradius_WHMCSReconnect();
       return "FreeRadius Database Query Error: ".$radiussqlerror;
     }
@@ -401,9 +401,9 @@ function freeradius_ChangePackage($params){
 
   if( $session_limit ) {
     $query = "UPDATE radcheck SET value='$session_limit' WHERE username='$username' AND attribute='Simultaneous-Use'";
-    $result = mysql_query($query,$freeradiussql);
+    $result = mysqli_query($freeradiussql, $query);
     if (!$result) {
-      $radiussqlerror = mysql_error();
+      $radiussqlerror = mysqli_error($GLOBALS["___mysqli_ston"]);
       freeradius_WHMCSReconnect();
       return "FreeRadius Database Query Error: ".$radiussqlerror;
     }
@@ -424,7 +424,7 @@ function freeradius_update_ip_address($params){
       "id"=>$params["serviceid"]
     )
   );
-  $data = mysql_fetch_array($result);
+  $data = mysqli_fetch_array($result);
   $id = $data['id'];
   $dedicatedip = $data['dedicatedip'];
 
@@ -432,22 +432,22 @@ function freeradius_update_ip_address($params){
   $sqlusername = $params["serverusername"];
   $sqlpassword = $params["serverpassword"];
   $sqldbname = $params["serveraccesshash"];
-  $freeradiussql = mysql_connect($sqlhost,$sqlusername,$sqlpassword);
-  mysql_select_db($sqldbname);
+  $freeradiussql = ($GLOBALS["___mysqli_ston"] = mysqli_connect($sqlhost, $sqlusername, $sqlpassword));
+  mysqli_select_db($GLOBALS["___mysqli_ston"], $sqldbname);
 
   $query = "DELETE FROM radreply WHERE username='$username' AND attribute='Framed-IP-Address'";
-  $result = mysql_query($query,$freeradiussql);
+  $result = mysqli_query($freeradiussql, $query);
   if (!$result) {
-    $radiussqlerror = mysql_error();
+    $radiussqlerror = mysqli_error($GLOBALS["___mysqli_ston"]);
     freeradius_WHMCSReconnect();
     return "FreeRadius Database Query Error: ".$radiussqlerror;
   }
 
   if( $dedicatedip ){
     $query = "INSERT INTO radreply (username,attribute,value,op) VALUES ('$username','Framed-IP-Address','$dedicatedip',':=')";
-    $result = mysql_query($query,$freeradiussql);
+    $result = mysqli_query($freeradiussql, $query);
     if (!$result) {
-      $radiussqlerror = mysql_error();
+      $radiussqlerror = mysqli_error($GLOBALS["___mysqli_ston"]);
       freeradius_WHMCSReconnect();
       return "FreeRadius Database Query Error: ".$radiussqlerror;
     }
@@ -524,21 +524,21 @@ function collect_usage($params){
   $sqldbname = $params["serveraccesshash"];
 
   $result = select_query("tblhosting","nextduedate,billingcycle",array("id"=>$serviceid));
-  $data = mysql_fetch_array($result);
+  $data = mysqli_fetch_array($result);
 
   $date_range = date_range( $data["nextduedate"], $data["billingcycle"] );
 
   $startdate = $date_range["startdate"];
   $enddate = $date_range["enddate"];
 
-  $freeradiussql = mysql_connect($sqlhost,$sqlusername,$sqlpassword);
-  mysql_select_db($sqldbname);
+  $freeradiussql = ($GLOBALS["___mysqli_ston"] = mysqli_connect($sqlhost, $sqlusername, $sqlpassword));
+  mysqli_select_db($GLOBALS["___mysqli_ston"], $sqldbname);
 
   $query = "SELECT COUNT(*) AS logins,SUM(radacct.AcctSessionTime) AS logintime,SUM(radacct.AcctInputOctets) AS uploads,SUM(radacct.AcctOutputOctets) AS downloads,SUM(radacct.AcctOutputOctets) + SUM(radacct.AcctInputOctets) AS total FROM radacct WHERE radacct.Username='$username' AND radacct.AcctStartTime>='".$startdate."'";
   if ($enddate) $query .= " AND radacct.AcctStartTime<='".$startdate."'";
   $query .= " ORDER BY AcctStartTime DESC";
-  $result = mysql_query($query,$freeradiussql);
-  $data = mysql_fetch_array($result);
+  $result = mysqli_query($freeradiussql, $query);
+  $data = mysqli_fetch_array($result);
   $logins = $data[0];
   $logintime = $data[1];
   $uploads = $data[2];
@@ -546,9 +546,9 @@ function collect_usage($params){
   $total = $data[4];
 
   $query = "SELECT radacct.AcctStartTime as start, radacct.AcctStopTime as stop FROM radacct WHERE radacct.Username='$username' ORDER BY AcctStartTime DESC LIMIT 0,1";
-  $result = mysql_query($query,$freeradiussql);
-  $data = mysql_fetch_array($result);
-  $sessions = mysql_num_rows($result);
+  $result = mysqli_query($freeradiussql, $query);
+  $data = mysqli_fetch_array($result);
+  $sessions = mysqli_num_rows($result);
   $start = $data[0];
   $end = $data[1];
 
@@ -638,8 +638,8 @@ function byte_size($bytes){
 
 function freeradius_WHMCSReconnect(){
   require( ROOTDIR . "/configuration.php" );
-  $whmcsmysql = mysql_connect($db_host,$db_username,$db_password);
-  mysql_select_db($db_name);
+  $whmcsmysql = ($GLOBALS["___mysqli_ston"] = mysqli_connect($db_host, $db_username, $db_password));
+  mysqli_select_db($GLOBALS["___mysqli_ston"], $db_name);
 }
 
 ?>
