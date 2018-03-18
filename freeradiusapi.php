@@ -24,7 +24,7 @@ $result = select_query(
     "username"=>$username
   )
 );
-$tblhosting = mysql_fetch_array($result);
+$tblhosting = mysqli_fetch_array($result);
 if( !$tblhosting ) {
   $return["message"] = "Username not found in WHMCS";
   echo json_encode( $return );
@@ -46,7 +46,7 @@ $result = select_query(
     "id" => $tblhosting["packageid"]
   )
 );
-$tblproducts = mysql_fetch_array($result);
+$tblproducts = mysqli_fetch_array($result);
 if( !$tblproducts ){
   $return["message"] = "Package not found in WHMCS";
   echo json_encode( $return );
@@ -128,7 +128,7 @@ else {
   if( is_numeric($tblproducts["configoption2"]) ) { $usage_limit = $tblproducts["configoption2"]; }
 }
 
-while ($data = mysql_fetch_array($result)) {
+while ($data = mysqli_fetch_array($result)) {
   $qty = $data['qty'];
   $optionname = $data['optionname'];
   if ($optionname == 'Megabytes') {
