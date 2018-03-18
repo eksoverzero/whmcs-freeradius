@@ -13,7 +13,7 @@ $freeradius_db_database = 'radius';
 // https://docs.whmcs.com/API_Authentication_Credentials#Creating_Admin_API_Authentication_Credentials
 $whmcs_api_url = 'http://whmcs/includes/api.php';
 $whmcs_api_secret = 'api_identifier_secret';
-whmcs_api_identifier = 'api_identifier_hash';
+$whmcs_api_identifier = 'api_identifier_hash';
 
 // Paths
 $radclient_path = '/usr/local/bin/radclient';
