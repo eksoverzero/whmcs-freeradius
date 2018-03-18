@@ -1,19 +1,20 @@
 <?php
-//General
+// General
 $general_timezone = 'Africa/Johannesburg';
 
-//Freeradius database options
+// FreeRADIUS database options
 $freeradius_db_host = 'localhost';
 $freeradius_db_username = 'radius';
 $freeradius_db_password = 'password123';
 $freeradius_db_database = 'radius';
 
-//WHMCS API options
+// WHMCS API options
+// How to create API Authentication Credentials:
+// https://docs.whmcs.com/API_Authentication_Credentials#Creating_Admin_API_Authentication_Credentials
 $whmcs_api_url = 'http://whmcs/includes/api.php';
-$whmcs_api_username = 'admin';
-$whmcs_api_password = 'admin';
-$whmcs_api_key = '1234567890';
+$whmcs_api_secret = 'api_identifier_secret';
+whmcs_api_identifier = 'api_identifier_hash';
 
-//Paths
+// Paths
 $radclient_path = '/usr/local/bin/radclient';
 ?>
