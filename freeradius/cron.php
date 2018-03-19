@@ -35,16 +35,16 @@
 //end
 
 //Connect to the radius database
-  $mysql = mysql_connect($freeradius_db_host, $freeradius_db_username, $freeradius_db_password);
-  $conn = mysql_select_db($freeradius_db_database);
+  $mysql = ($GLOBALS["___mysqli_ston"] = mysqli_connect($freeradius_db_host,  $freeradius_db_username,  $freeradius_db_password));
+  $conn = mysqli_select_db($GLOBALS["___mysqli_ston"], $freeradius_db_database);
   if (!$conn) {
-    die( "Could not connect to WHMCS database: " . mysql_error() . "\n" );
+    die( "Could not connect to WHMCS database: " . mysqli_error($GLOBALS["___mysqli_ston"]) . "\n" );
   }
 //end
 
 //Get a list of users in the radcheck table 
-  $radcheck_q = mysql_query("SELECT DISTINCT username FROM radcheck");
-  while($radcheck = mysql_fetch_array($radcheck_q)) {
+  $radcheck_q = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT DISTINCT username FROM radcheck");
+  while($radcheck = mysqli_fetch_array($radcheck_q)) {
     array_push($radius_users,$radcheck['username']);
   }
 //end
@@ -96,25 +96,25 @@
 
     $query = "SELECT SUM(radacct.AcctOutputOctets) + SUM(radacct.AcctInputOctets) AS total FROM radacct WHERE radacct.Username='$user' AND radacct.AcctStartTime>='".$startdate."'";
     if ($enddate) $query .= " AND radacct.AcctStartTime<='".$startdate."'";
-    $result = mysql_query($query);
-    $data = mysql_fetch_array($result);
+    $result = mysqli_query($GLOBALS["___mysqli_ston"], $query);
+    $data = mysqli_fetch_array($result);
     $usagetotal = $data[0];
     if( ( $usagetotal == "" ) || ( $usagetotal == NULL ) ) { $usagetotal = 0; }
 
     if($usagetotal >= $usagelimit) {
-      $result = mysql_query( "SELECT value FROM radcheck where username = '$user' and attribute = 'Expiration'" );
-      $row = mysql_fetch_array($result);
+      $result = mysqli_query($GLOBALS["___mysqli_ston"],  "SELECT value FROM radcheck where username = '$user' and attribute = 'Expiration'" );
+      $row = mysqli_fetch_array($result);
       if( !$row ) {
-        $result = mysql_query( "INSERT into radcheck (username, attribute, op, value) values ('".$user."','Expiration',':=','".date("Y-d-m G:i:s")."')" );
+        $result = mysqli_query($GLOBALS["___mysqli_ston"],  "INSERT into radcheck (username, attribute, op, value) values ('".$user."','Expiration',':=','".date("Y-d-m G:i:s")."')" );
         echo $user . ": Account has reached its usage limit.\n";
         disconnect($user);
       }
     }
     else {
-      $result = mysql_query( "SELECT value FROM radcheck where username = '$user' and attribute = 'Expiration'" );
-      $row = mysql_fetch_array($result);
+      $result = mysqli_query($GLOBALS["___mysqli_ston"],  "SELECT value FROM radcheck where username = '$user' and attribute = 'Expiration'" );
+      $row = mysqli_fetch_array($result);
       if( $row ) {
-        $result = mysql_query("DELETE from radcheck where username = '".$user."' and attribute = 'Expiration'");
+        $result = mysqli_query($GLOBALS["___mysqli_ston"], "DELETE from radcheck where username = '".$user."' and attribute = 'Expiration'");
         echo $user . ": Account is within its usage limit. Removing suspension\n";
       }
     }
@@ -125,13 +125,13 @@
   function disconnect($username) {
     require( dirname(__FILE__) . '/config.php' );
 
-    $result = mysql_query("SELECT radacctid FROM radacct where username = '".$username."' and acctstoptime is null");
-    while( $row = mysql_fetch_array($result) ) {
-      $result = mysql_query("SELECT * FROM radacct where radacctid = '".$row['radacctid']."'");
-      $radacct = mysql_fetch_array($result);
+    $result = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT radacctid FROM radacct where username = '".$username."' and acctstoptime is null");
+    while( $row = mysqli_fetch_array($result) ) {
+      $result = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT * FROM radacct where radacctid = '".$row['radacctid']."'");
+      $radacct = mysqli_fetch_array($result);
 
-      $result = mysql_query("SELECT * FROM nas where nasname = '".$radacct['nasipaddress']."'");
-      $nas = mysql_fetch_array($result);
+      $result = mysqli_query($GLOBALS["___mysqli_ston"], "SELECT * FROM nas where nasname = '".$radacct['nasipaddress']."'");
+      $nas = mysqli_fetch_array($result);
       if( $nas ) {
         $command = "echo \"User-Name='".$username."',Framed-IP-Address='".$radacct['framedipaddress']."',Acct-Session-Id='".$radacct['acctsessionid']."',NAS-IP-Address='".$radacct['nasipaddress']."'\"| ".$radclient_path." -r 3 -x ".$nas['nasname'].":".$nas['ports']." disconnect ".$nas['secret']."";
         exec($command,$output,$rv);
@@ -152,7 +152,7 @@
 //end
 
 //Close radius mysql connection
-  mysql_close($mysql);
+  ((is_null($___mysqli_res = mysqli_close($mysql))) ? false : $___mysqli_res);
 //end
 
 ?>
