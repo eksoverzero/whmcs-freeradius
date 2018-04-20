@@ -33,13 +33,13 @@ whmcs-freeradius/
 
 ##### FreeRADIUS servers
 
-- Copy the `freeradius` folder to anywhere on the FreeRADIUS server. For example, on Linux `cp whmcs-freeradius/freeradius /opt/whmcs-freeradius`
+- Copy the `freeradius` folder to anywhere on the FreeRADIUS server.
 - Rename `config.php.example` to `config.php`
 - Edit `config.php` with **your** database and WHMCS server details
-- Create a Cron task for the `cron.php` file. If your `cron.php` file is in `/opt/whmcs-freeradius` then your cron task shold look something like this, if you want it to run every 5 minutes:
+- Create a Cron task for the `cron.php` file. If you want it to run every 5 minutes:
   
   ```
-  */5 * * * * PATH_TO_PHP/php -q /opt/whmcs-freeradius/cron.php
+  */5 * * * * /PATH/TO/php -q /PATH/TO/whmcs-freeradius/freeradius/cron.php
   ```
 
-- On Linux, you can find the `PATH_TO_PHP` by running `which php`
+- On Linux, you can find the `PATH/TO` by running `which php`
