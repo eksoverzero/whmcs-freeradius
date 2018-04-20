@@ -2,11 +2,9 @@
 
 [![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/secondimpression/whmcs-freeradius?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
-### LOOKING FOR A MAINTAINER
+## WHMCS 7.x
 
-FreeRADIUS experience not required, just PHP, MySQL and WHMCS. I'll be available for questions, I just don't have time to be as active on this project as I'd like to be.
-
-*Willing to pay for assistance on a per bug/feature basis*
+The [refactor](https://github.com/eksoverzero/whmcs-freeradius/tree/refactor) branch contains a work in progress rewrite for WHMCS 7.x
 
 ### Installing
 
