@@ -1005,6 +1005,36 @@ function freeradius_WHMCSReconnect() {
     mysqli_select_db($GLOBALS["___mysqli_ston"], $db_name);
 }
 
+
+function freeradius_username($email){
+  global $CONFIG;
+  $emaillen = strlen($email);
+  $result = select_query(
+    "tblhosting",
+    "COUNT(*)",
+    array(
+      "username" => $email
+    )
+  );
+  $data = mysql_fetch_array($result);
+  $username_exists = $data[0];
+  $suffix = 0;
+  while( $username_exists > 0 ){
+    $suffix++;
+    $email = substr( $email, 0, $emaillen ) . $suffix;
+    $result = select_query(
+      "tblhosting",
+      "COUNT(*)",
+      array(
+        "username" => $email
+      )
+    );
+    $data = mysql_fetch_array($result);
+    $username_exists = $data[0];
+  }
+  return $email;
+}
+
 function date_range($nextduedate, $billingcycle) {
     $day = substr($nextduedate, 8, 2);
     $year = substr($nextduedate, 0, 4);
