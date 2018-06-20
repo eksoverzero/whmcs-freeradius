@@ -259,6 +259,7 @@ function freeradius_SuspendAccount(array $params){
         $sqldbname = $params['serveraccesshash'];
         $sqlusername = $params['serverusername'];
         $sqlpassword = $params['serverpassword'];
+        $username = $params['username'];
 
         $freeradiussql = ($GLOBALS["___mysqli_ston"] = mysqli_connect($sqlhost,  $sqlusername,  $sqlpassword));
         mysqli_select_db($GLOBALS["___mysqli_ston"], $sqldbname);
@@ -340,6 +341,7 @@ function freeradius_UnsuspendAccount(array $params){
         $sqldbname = $params['serveraccesshash'];
         $sqlusername = $params['serverusername'];
         $sqlpassword = $params['serverpassword'];
+        $username = $params['username'];
 
         $freeradiussql = ($GLOBALS["___mysqli_ston"] = mysqli_connect($sqlhost,  $sqlusername,  $sqlpassword));
         mysqli_select_db($GLOBALS["___mysqli_ston"], $sqldbname);
@@ -403,6 +405,7 @@ function freeradius_TerminateAccount(array $params){
         $sqldbname = $params['serveraccesshash'];
         $sqlusername = $params['serverusername'];
         $sqlpassword = $params['serverpassword'];
+        $username = $params['username'];
 
         $freeradiussql = ($GLOBALS["___mysqli_ston"] = mysqli_connect($sqlhost,  $sqlusername,  $sqlpassword));
         mysqli_select_db($GLOBALS["___mysqli_ston"], $sqldbname);
@@ -470,6 +473,7 @@ function freeradius_ChangePassword(array $params){
         $sqldbname = $params['serveraccesshash'];
         $sqlusername = $params['serverusername'];
         $sqlpassword = $params['serverpassword'];
+        $username = $params['username'];
 
         $freeradiussql = ($GLOBALS["___mysqli_ston"] = mysqli_connect($sqlhost,  $sqlusername,  $sqlpassword));
         mysqli_select_db($GLOBALS["___mysqli_ston"], $sqldbname);
@@ -540,6 +544,7 @@ function freeradius_ChangePackage(array $params)
         $sqldbname = $params['serveraccesshash'];
         $sqlusername = $params['serverusername'];
         $sqlpassword = $params['serverpassword'];
+        $username = $params['username'];
 
         $freeradiussql = ($GLOBALS["___mysqli_ston"] = mysqli_connect($sqlhost,  $sqlusername,  $sqlpassword));
         mysqli_select_db($GLOBALS["___mysqli_ston"], $sqldbname);
